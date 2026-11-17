@@ -1,0 +1,19 @@
+package com.example.lession.ui.viewmodels
+
+import android.app.Application
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.lession.ble.BleManager
+
+class WorkoutViewModelFactory(
+    private val application: Application,
+    private val bleManager: BleManager,
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(WorkoutViewModel::class.java)) {
+            return WorkoutViewModel(application, bleManager) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
