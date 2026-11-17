@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class WorkoutStats(
+    val hasReceivedData: Boolean = false,
     val currentAdc: Int = 0,
     val maxAdc: Int = 0,
     val minAdc: Int = 0,
@@ -73,6 +74,7 @@ class WorkoutViewModel(
         lastHzCalcTime = now
 
         _workoutStats.value = WorkoutStats(
+            hasReceivedData = _workoutStats.value.hasReceivedData,
             isRecording = true,
             startTimeMs = now,
         )
@@ -149,6 +151,7 @@ class WorkoutViewModel(
         }
 
         _workoutStats.value = current.copy(
+            hasReceivedData = true,
             currentAdc = adc,
             maxAdc = newMax,
             minAdc = newMin,
@@ -160,7 +163,7 @@ class WorkoutViewModel(
 
         val points = _chartPoints.value.toMutableList()
         points.add(reading)
-        if (points.size > 150) {
+        if (points.size > 200) {
             points.removeAt(0)
         }
         _chartPoints.value = points

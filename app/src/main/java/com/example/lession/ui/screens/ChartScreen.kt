@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -68,12 +69,12 @@ fun ChartScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Puntos en Buffer: ${readings.size}",
+                            text = "Muestras en Pantalla: ${readings.size}",
                             fontSize = 12.sp,
                             color = LessionTextMuted,
                         )
                         Text(
-                            text = if (readings.isNotEmpty()) "Último: ${readings.last().adcValue} ADC" else "Esperando datos...",
+                            text = if (readings.isNotEmpty()) "Lectura Sensor: ${readings.last().adcValue} ADC" else "Esperando señal del sensor...",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = LessionLimeAccent,
@@ -125,7 +126,7 @@ fun ChartScreen(
 
             // Chart Guidance
             Text(
-                text = "Gráfico de frecuencia 50 Hz en función del tiempo (t_ms). Representación fluida de la onda con escala 0 - 4095 ADC.",
+                text = "Gráfico continuo de la onda muscular EMG transmitida por el sensor a 50 Hz. Rango analógico digital: 0 - 4095 ADC.",
                 fontSize = 12.sp,
                 color = LessionTextMuted,
                 lineHeight = 16.sp,
@@ -169,6 +170,7 @@ fun EmgLineCanvasChart(
 
         val stepX = width / (readings.size - 1).coerceAtLeast(1)
         val path = Path()
+        val fillPath = Path()
 
         readings.forEachIndexed { index, reading ->
             val x = index * stepX
@@ -177,8 +179,16 @@ fun EmgLineCanvasChart(
 
             if (index == 0) {
                 path.moveTo(x, y)
+                fillPath.moveTo(x, height)
+                fillPath.lineTo(x, y)
             } else {
                 path.lineTo(x, y)
+                fillPath.lineTo(x, y)
+            }
+
+            if (index == readings.size - 1) {
+                fillPath.lineTo(x, height)
+                fillPath.close()
             }
 
             // Highlight points exceeding threshold
@@ -191,13 +201,41 @@ fun EmgLineCanvasChart(
             }
         }
 
+        // Draw Gradient Fill
+        drawPath(
+            path = fillPath,
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    LessionLimeAccent.copy(alpha = 0.25f),
+                    Color.Transparent,
+                )
+            ),
+        )
+
+        // Draw Waveform Line
         drawPath(
             path = path,
             color = LessionLimeAccent,
             style = Stroke(
-                width = 2.5.dp.toPx(),
+                width = 3.dp.toPx(),
                 cap = StrokeCap.Round,
             ),
+        )
+
+        // Draw pulse dot at current (latest) point
+        val lastReading = readings.last()
+        val lastX = (readings.size - 1) * stepX
+        val lastY = height - ((lastReading.adcValue / 4095f).coerceIn(0f, 1f) * height)
+
+        drawCircle(
+            color = LessionLimeAccent,
+            radius = 6.dp.toPx(),
+            center = Offset(lastX, lastY),
+        )
+        drawCircle(
+            color = LessionBackgroundDark,
+            radius = 3.dp.toPx(),
+            center = Offset(lastX, lastY),
         )
     }
 }

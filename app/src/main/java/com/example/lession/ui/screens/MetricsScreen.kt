@@ -1,7 +1,6 @@
 package com.example.lession.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -96,14 +95,14 @@ fun MetricsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "${workoutStats.currentAdc}",
+                        text = if (workoutStats.hasReceivedData) "${workoutStats.currentAdc}" else "--",
                         fontSize = 64.sp,
                         fontWeight = FontWeight.Black,
                         color = LessionTextWhite,
                     )
 
                     Text(
-                        text = "Lectura ADC actual (0 a 4095)",
+                        text = if (workoutStats.hasReceivedData) "Lectura ADC actual (0 a 4095)" else "Esperando paquetes del sensor ESP32...",
                         fontSize = 12.sp,
                         color = LessionTextMuted,
                     )
@@ -118,10 +117,10 @@ fun MetricsScreen(
                             .padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceAround,
                     ) {
-                        MetricMiniItem("MÁXIMO", "${workoutStats.maxAdc}")
-                        MetricMiniItem("MÍNIMO", "${workoutStats.minAdc}")
-                        MetricMiniItem("PROMEDIO", "${workoutStats.avgAdc}")
-                        MetricMiniItem("MUESTRAS", "${workoutStats.sampleRateHz} Hz")
+                        MetricMiniItem("MÁXIMO", if (workoutStats.hasReceivedData) "${workoutStats.maxAdc}" else "--")
+                        MetricMiniItem("MÍNIMO", if (workoutStats.hasReceivedData) "${workoutStats.minAdc}" else "--")
+                        MetricMiniItem("PROMEDIO", if (workoutStats.hasReceivedData) "${workoutStats.avgAdc}" else "--")
+                        MetricMiniItem("MUESTRAS", if (workoutStats.hasReceivedData) "${workoutStats.sampleRateHz} Hz" else "0 Hz")
                     }
                 }
             }

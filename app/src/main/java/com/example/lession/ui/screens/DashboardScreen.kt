@@ -183,7 +183,7 @@ fun DashboardScreen(
                     )
 
                     Text(
-                        text = "${workoutStats.sampleRateHz} Hz",
+                        text = if (workoutStats.hasReceivedData) "${workoutStats.sampleRateHz} Hz" else "0 Hz",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = LessionLimeAccent,
@@ -199,13 +199,13 @@ fun DashboardScreen(
                 ) {
                     Column {
                         Text(
-                            text = "${workoutStats.currentAdc}",
+                            text = if (workoutStats.hasReceivedData) "${workoutStats.currentAdc}" else "--",
                             fontSize = 48.sp,
                             fontWeight = FontWeight.Black,
                             color = LessionLimeAccent,
                         )
                         Text(
-                            text = "Unidades ADC (0 - 4095)",
+                            text = if (workoutStats.hasReceivedData) "Unidades ADC (0 - 4095)" else "Esperando señal del sensor ESP32...",
                             fontSize = 11.sp,
                             color = LessionTextMuted,
                         )
@@ -213,13 +213,13 @@ fun DashboardScreen(
 
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "Máx: ${workoutStats.maxAdc}",
+                            text = "Máx: ${if (workoutStats.hasReceivedData) workoutStats.maxAdc else "--"}",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = LessionTextWhite,
                         )
                         Text(
-                            text = "Prom: ${workoutStats.avgAdc}",
+                            text = "Prom: ${if (workoutStats.hasReceivedData) workoutStats.avgAdc else "--"}",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = LessionTextWhite,
