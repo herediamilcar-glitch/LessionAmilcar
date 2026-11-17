@@ -4,7 +4,40 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Yellow Shield Outline -->
+    <path
+        android:strokeColor="#E9FF2F"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 54,16 L 88,26 L 88,54 C 88,72 73,86 54,92 C 43,88 38,84 34,78 M 20,44 L 20,26 L 54,16" />
+
+    <!-- Yellow EMG Wave Line -->
+    <path
+        android:strokeColor="#E9FF2F"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M 46,49 L 53,49 L 57,38 L 62,68 L 68,28 L 73,58 L 77,44 L 84,48" />
+
+    <!-- White Running Sneaker Silhouette -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M30,30h48v48h-48z" />
+        android:pathData="M 24,44 C 20,47 17,52 18,57 C 19,62 30,70 42,75 L 53,77 C 54,77 55,75 54,73 C 51,69 44,63 41,60 C 39,58 37,54 35,51 C 33,48 31,48 29,49 C 27,50 25,46 24,44 Z" />
+
+    <!-- Sneaker Eyelets & Laces Cutout -->
+    <path
+        android:strokeColor="#4026C7"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M 33,52 L 30,55 M 36,56 L 33,59 M 39,60 L 36,63 M 42,64 L 39,67" />
+
+    <!-- White Speed Lines below Sneaker -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 12,67 L 22,67 M 16,73 L 26,73 M 22,79 L 53,79" />
+
 </vector>
