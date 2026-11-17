@@ -22,12 +22,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -59,7 +57,6 @@ import com.example.lession.ui.viewmodels.WorkoutStats
 fun DashboardScreen(
     connectionState: BleConnectionState,
     workoutStats: WorkoutStats,
-    activeAlert: String?,
     onNavigate: (String) -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
@@ -130,36 +127,6 @@ fun DashboardScreen(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-
-        // Active Alert Banner if triggered
-        if (activeAlert != null) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                colors = CardDefaults.cardColors(containerColor = LessionAlertRed),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.NotificationsActive,
-                        contentDescription = "Alerta",
-                        tint = LessionTextWhite,
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = activeAlert,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = LessionTextWhite,
-                    )
-                }
-            }
-        }
 
         // Live Metric Summary Banner
         Card(
@@ -289,29 +256,11 @@ fun DashboardScreen(
             }
             item {
                 DashboardCard(
-                    title = "Mediciones",
-                    subtitle = "Valores en Vivo",
-                    icon = Icons.Default.Speed,
-                    iconColor = LessionLimeAccent,
-                    onClick = { onNavigate("metrics") },
-                )
-            }
-            item {
-                DashboardCard(
                     title = "Gráficos",
                     subtitle = "Onda Temporal",
                     icon = Icons.Default.ShowChart,
                     iconColor = LessionLimeAccent,
                     onClick = { onNavigate("charts") },
-                )
-            }
-            item {
-                DashboardCard(
-                    title = "Alertas",
-                    subtitle = "Parámetros Fatiga",
-                    icon = Icons.Default.NotificationsActive,
-                    iconColor = LessionWarningOrange,
-                    onClick = { onNavigate("alerts") },
                 )
             }
             item {
