@@ -109,6 +109,7 @@ fun DashboardScreen(
                     .clip(RoundedCornerShape(12.dp))
                     .background(LessionCardDark)
                     .border(1.dp, statusColor, RoundedCornerShape(12.dp))
+                    .clickable { onNavigate("device_scan") }
                     .padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
