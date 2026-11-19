@@ -3,14 +3,18 @@ package com.example.lession.ui.viewmodels
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.example.lession.ble.BleManager
 import com.example.lession.ble.EmgReading
 import com.example.lession.data.db.AlertEvent
 import com.example.lession.data.db.WorkoutDatabase
+import com.example.lession.data.db.WorkoutMeasurement
 import com.example.lession.data.db.WorkoutSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class WorkoutStats(
@@ -34,6 +38,7 @@ class WorkoutViewModel(
     private val db = WorkoutDatabase.getInstance(application)
     private val sessionDao = db.workoutSessionDao()
     private val alertDao = db.alertEventDao()
+    private val measurementDao = db.workoutMeasurementDao()
 
     private val _workoutStats = MutableStateFlow(WorkoutStats())
     val workoutStats: StateFlow<WorkoutStats> = _workoutStats.asStateFlow()
@@ -46,8 +51,17 @@ class WorkoutViewModel(
 
     private val _activeAlert = MutableStateFlow<String?>(null)
     val activeAlert: StateFlow<String?> = _activeAlert.asStateFlow()
+    val alertHistory: StateFlow<List<AlertEvent>> = alertDao.getAllAlerts()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList(),
+        )
 
     private var totalSum: Long = 0
+    private val recordedMeasurements = mutableListOf<EmgReading>()
+    private val recordedAlerts = mutableListOf<AlertEvent>()
+    private var alertActive = false
     private var samplesInLastSecond = 0
     private var lastHzCalcTime = System.currentTimeMillis()
 
@@ -70,6 +84,9 @@ class WorkoutViewModel(
     fun startRecording() {
         val now = System.currentTimeMillis()
         totalSum = 0
+        recordedMeasurements.clear()
+        recordedAlerts.clear()
+        alertActive = false
         samplesInLastSecond = 0
         lastHzCalcTime = now
 
@@ -101,9 +118,27 @@ class WorkoutViewModel(
             alertCount = current.alertCount,
         )
 
+        val measurementsToSave = recordedMeasurements.toList()
+        val alertsToSave = recordedAlerts.toList()
         viewModelScope.launch {
-            sessionDao.insertSession(sessionToSave)
+            db.withTransaction {
+                val sessionId = sessionDao.insertSession(sessionToSave)
+                measurementDao.insertMeasurements(
+                    measurementsToSave.map { reading ->
+                        WorkoutMeasurement(
+                            sessionId = sessionId,
+                            timestampMs = reading.timestampMs,
+                            adcValue = reading.adcValue,
+                        )
+                    }
+                )
+                alertDao.insertAlerts(
+                    alertsToSave.map { alert -> alert.copy(sessionId = sessionId) }
+                )
+            }
         }
+        recordedMeasurements.clear()
+        recordedAlerts.clear()
 
         bleManager.sendCommand("STOP")
         _workoutStats.value = current.copy(isRecording = false)
@@ -112,6 +147,9 @@ class WorkoutViewModel(
     private fun processNewReading(reading: EmgReading) {
         val current = _workoutStats.value
         val adc = reading.adcValue
+        if (current.isRecording) {
+            recordedMeasurements.add(reading)
+        }
 
         val newMax = if (current.sampleCount == 0) adc else maxOf(current.maxAdc, adc)
         val newMin = if (current.sampleCount == 0) adc else minOf(current.minAdc, adc)
@@ -131,23 +169,24 @@ class WorkoutViewModel(
         var newAlertCount = current.alertCount
         val threshold = _alertThreshold.value
 
-        if (adc >= threshold) {
+        if (adc >= threshold && !alertActive) {
+            alertActive = true
             newAlertCount++
             val msg = "¡Atención! Esfuerzo elevado detectado: $adc ADC (Umbral: $threshold)"
             _activeAlert.value = msg
 
             if (current.isRecording) {
-                viewModelScope.launch {
-                    alertDao.insertAlert(
-                        AlertEvent(
-                            timestampMs = reading.timestampMs,
-                            adcValue = adc,
-                            thresholdValue = threshold,
-                            message = msg,
-                        )
+                recordedAlerts.add(
+                    AlertEvent(
+                        timestampMs = reading.timestampMs,
+                        adcValue = adc,
+                        thresholdValue = threshold,
+                        message = msg,
                     )
-                }
+                )
             }
+        } else if (adc < threshold) {
+            alertActive = false
         }
 
         _workoutStats.value = current.copy(

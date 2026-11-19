@@ -1,6 +1,7 @@
 package com.example.lession.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
@@ -38,7 +40,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lession.data.db.WorkoutSession
+import com.example.lession.data.db.WorkoutMeasurement
+import com.example.lession.ble.EmgReading
 import com.example.lession.ui.components.LessionTopBar
+import com.example.lession.ui.theme.LessionPurplePrimary
 import com.example.lession.ui.theme.LessionAlertRed
 import com.example.lession.ui.theme.LessionBackgroundDark
 import com.example.lession.ui.theme.LessionCardBorder
@@ -55,6 +60,7 @@ fun HistoryScreen(
     sessions: List<WorkoutSession>,
     onDeleteSession: (WorkoutSession) -> Unit,
     onExportSession: (WorkoutSession) -> Unit,
+    onViewSession: (WorkoutSession) -> Unit,
     onBackClick: () -> Unit,
 ) {
     var sessionToDelete by remember { mutableStateOf<WorkoutSession?>(null) }
@@ -112,7 +118,9 @@ fun HistoryScreen(
                     val dateStr = dateFormat.format(Date(session.startTimeMs))
 
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onViewSession(session) },
                         colors = CardDefaults.cardColors(containerColor = LessionCardDark),
                         shape = RoundedCornerShape(16.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, LessionCardBorder),
@@ -140,6 +148,14 @@ fun HistoryScreen(
                                 }
 
                                 Row {
+                                    IconButton(onClick = { onViewSession(session) }) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                                            contentDescription = "Ver mediciones",
+                                            tint = LessionLimeAccent,
+                                            modifier = Modifier.size(22.dp),
+                                        )
+                                    }
                                     IconButton(onClick = { onExportSession(session) }) {
                                         Icon(
                                             imageVector = Icons.Default.Download,
@@ -223,6 +239,94 @@ fun HistoryScreen(
             containerColor = LessionCardDark,
             shape = RoundedCornerShape(16.dp),
         )
+    }
+}
+
+@Composable
+fun WorkoutDetailScreen(
+    session: WorkoutSession,
+    measurements: List<WorkoutMeasurement>,
+    onBackClick: () -> Unit,
+) {
+    val readings = measurements.map { EmgReading(it.timestampMs, it.adcValue) }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(LessionBackgroundDark),
+    ) {
+        LessionTopBar(title = "Detalle del entrenamiento", onBackClick = onBackClick)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item {
+                val dateFormat = SimpleDateFormat("dd/MM/yyyy • HH:mm", Locale.getDefault())
+                Text(
+                    text = dateFormat.format(Date(session.startTimeMs)),
+                    color = LessionTextMuted,
+                    fontSize = 13.sp,
+                )
+                Text(
+                    text = "${session.sampleCount} mediciones guardadas · ${session.durationSeconds} s",
+                    color = LessionTextWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(260.dp),
+                    colors = CardDefaults.cardColors(containerColor = LessionCardDark),
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, LessionPurplePrimary),
+                ) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                    ) {
+                        EmgLineCanvasChart(
+                            readings = readings,
+                            alertThreshold = 4095,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            }
+            item {
+                Text(
+                    text = "TIEMPO DEL SENSOR (ms) · SEÑAL EMG (ADC)",
+                    color = LessionTextMuted,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            items(measurements) { measurement ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(LessionCardDark, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = "${measurement.timestampMs} ms",
+                        color = LessionTextMuted,
+                        fontSize = 12.sp,
+                    )
+                    Text(
+                        text = "${measurement.adcValue} ADC",
+                        color = LessionLimeAccent,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
     }
 }
 

@@ -9,10 +9,16 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.lession.data.db.WorkoutDatabase
+import com.example.lession.data.db.WorkoutMeasurement
 import com.example.lession.data.db.WorkoutSession
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
@@ -23,6 +29,8 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
 
     private val db = WorkoutDatabase.getInstance(application)
     private val sessionDao = db.workoutSessionDao()
+    private val measurementDao = db.workoutMeasurementDao()
+    private val selectedSessionId = MutableStateFlow<Long?>(null)
 
     val sessions: StateFlow<List<WorkoutSession>> = sessionDao.getAllSessions()
         .stateIn(
@@ -30,6 +38,22 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList(),
         )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val selectedMeasurements: StateFlow<List<WorkoutMeasurement>> = selectedSessionId
+        .flatMapLatest { sessionId ->
+            if (sessionId == null) flowOf(emptyList())
+            else measurementDao.getMeasurementsForSession(sessionId)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList(),
+        )
+
+    fun selectSession(sessionId: Long) {
+        selectedSessionId.value = sessionId
+    }
 
     fun deleteSession(session: WorkoutSession) {
         viewModelScope.launch {
@@ -43,6 +67,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
                 val context = getApplication<Application>()
                 val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
                 val displayFormat = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
+                val measurements = measurementDao.getMeasurementsForSessionOnce(session.id)
 
                 val fileName = "LESSION_Entrenamiento_${dateFormat.format(Date(session.startTimeMs))}.csv"
 
@@ -52,6 +77,11 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
                     appendLine(
                         "\"${displayFormat.format(Date(session.startTimeMs))}\",\"${displayFormat.format(Date(session.startTimeMs))}\",\"${displayFormat.format(Date(session.endTimeMs))}\",${session.durationSeconds},${session.maxAdc},${session.minAdc},${session.avgAdc},${session.sampleCount},${session.alertCount}"
                     )
+                    appendLine()
+                    appendLine("Marca de tiempo (ms),Lectura EMG (ADC)")
+                    measurements.forEach { measurement ->
+                        appendLine("${measurement.timestampMs},${measurement.adcValue}")
+                    }
                 }
 
                 val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.BluetoothConnected
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShowChart
@@ -57,6 +58,8 @@ import com.example.lession.ui.viewmodels.WorkoutStats
 fun DashboardScreen(
     connectionState: BleConnectionState,
     workoutStats: WorkoutStats,
+    activeAlert: String?,
+    onClearAlert: () -> Unit,
     onNavigate: (String) -> Unit,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
@@ -198,6 +201,40 @@ fun DashboardScreen(
                     }
                 }
 
+                if (activeAlert != null) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigate("alerts") },
+                        colors = CardDefaults.cardColors(containerColor = LessionAlertRed),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = activeAlert,
+                                color = LessionTextWhite,
+                                fontSize = 12.sp,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Entendido",
+                                color = LessionTextWhite,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.clickable { onClearAlert() },
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Record / Stop Session Button
@@ -278,6 +315,15 @@ fun DashboardScreen(
                     icon = Icons.Default.Settings,
                     iconColor = LessionTextMuted,
                     onClick = { onNavigate("settings") },
+                )
+            }
+            item {
+                DashboardCard(
+                    title = "Alertas",
+                    subtitle = "Umbral y eventos",
+                    icon = Icons.Default.NotificationsActive,
+                    iconColor = LessionWarningOrange,
+                    onClick = { onNavigate("alerts") },
                 )
             }
         }

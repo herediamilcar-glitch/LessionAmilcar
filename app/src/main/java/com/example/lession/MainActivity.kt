@@ -22,12 +22,16 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.lession.ui.screens.AlertsScreen
 import com.example.lession.ui.screens.ChartScreen
 import com.example.lession.ui.screens.DashboardScreen
 import com.example.lession.ui.screens.DeviceScanScreen
 import com.example.lession.ui.screens.HistoryScreen
 import com.example.lession.ui.screens.HomeScreen
 import com.example.lession.ui.screens.SettingsScreen
+import com.example.lession.ui.screens.WorkoutDetailScreen
 import com.example.lession.ui.theme.LessionTheme
 import com.example.lession.ui.viewmodels.BleViewModel
 import com.example.lession.ui.viewmodels.HistoryViewModel
@@ -85,8 +89,11 @@ fun LessionApp() {
     val workoutStats by workoutViewModel.workoutStats.collectAsState()
     val chartPoints by workoutViewModel.chartPoints.collectAsState()
     val alertThreshold by workoutViewModel.alertThreshold.collectAsState()
+    val activeAlert by workoutViewModel.activeAlert.collectAsState()
+    val alertHistory by workoutViewModel.alertHistory.collectAsState()
 
     val sessions by historyViewModel.sessions.collectAsState()
+    val selectedMeasurements by historyViewModel.selectedMeasurements.collectAsState()
     val autoReconnect by settingsViewModel.autoReconnectSetting.collectAsState()
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -105,6 +112,8 @@ fun LessionApp() {
                 DashboardScreen(
                     connectionState = connectionState,
                     workoutStats = workoutStats,
+                    activeAlert = activeAlert,
+                    onClearAlert = { workoutViewModel.clearActiveAlert() },
                     onNavigate = { route -> navController.navigate(route) },
                     onStartRecording = { workoutViewModel.startRecording() },
                     onStopRecording = { workoutViewModel.stopRecording() },
@@ -136,14 +145,47 @@ fun LessionApp() {
                     sessions = sessions,
                     onDeleteSession = { session -> historyViewModel.deleteSession(session) },
                     onExportSession = { session -> historyViewModel.exportSession(session) },
+                    onViewSession = { session ->
+                        historyViewModel.selectSession(session.id)
+                        navController.navigate("history/${session.id}")
+                    },
                     onBackClick = { navController.popBackStack() },
                 )
+            }
+
+            composable(
+                route = "history/{sessionId}",
+                arguments = listOf(navArgument("sessionId") { type = NavType.LongType }),
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getLong("sessionId")
+                val session = sessions.firstOrNull { it.id == sessionId }
+                LaunchedEffect(sessionId) {
+                    if (sessionId != null) historyViewModel.selectSession(sessionId)
+                }
+                if (session != null) {
+                    WorkoutDetailScreen(
+                        session = session,
+                        measurements = selectedMeasurements,
+                        onBackClick = { navController.popBackStack() },
+                    )
+                }
             }
 
             composable("settings") {
                 SettingsScreen(
                     autoReconnect = autoReconnect,
                     onAutoReconnectChanged = { settingsViewModel.setAutoReconnect(it) },
+                    onBackClick = { navController.popBackStack() },
+                )
+            }
+
+            composable("alerts") {
+                AlertsScreen(
+                    currentThreshold = alertThreshold,
+                    activeAlert = activeAlert,
+                    alertHistory = alertHistory,
+                    onThresholdChanged = { workoutViewModel.setAlertThreshold(it) },
+                    onClearAlert = { workoutViewModel.clearActiveAlert() },
                     onBackClick = { navController.popBackStack() },
                 )
             }

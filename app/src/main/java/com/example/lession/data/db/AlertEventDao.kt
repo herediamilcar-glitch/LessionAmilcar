@@ -11,6 +11,9 @@ interface AlertEventDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAlert(alert: AlertEvent)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAlerts(alerts: List<AlertEvent>)
+
     @Query("SELECT * FROM alert_events ORDER BY timestampMs DESC")
     fun getAllAlerts(): Flow<List<AlertEvent>>
 
