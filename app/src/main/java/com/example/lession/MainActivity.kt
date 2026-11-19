@@ -135,6 +135,7 @@ fun LessionApp() {
                 HistoryScreen(
                     sessions = sessions,
                     onDeleteSession = { session -> historyViewModel.deleteSession(session) },
+                    onExportSession = { session -> historyViewModel.exportSession(session) },
                     onBackClick = { navController.popBackStack() },
                 )
             }

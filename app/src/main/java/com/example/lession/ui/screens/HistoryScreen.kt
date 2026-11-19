@@ -16,14 +16,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -46,8 +54,11 @@ import java.util.Locale
 fun HistoryScreen(
     sessions: List<WorkoutSession>,
     onDeleteSession: (WorkoutSession) -> Unit,
+    onExportSession: (WorkoutSession) -> Unit,
     onBackClick: () -> Unit,
 ) {
+    var sessionToDelete by remember { mutableStateOf<WorkoutSession?>(null) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -128,13 +139,23 @@ fun HistoryScreen(
                                     )
                                 }
 
-                                IconButton(onClick = { onDeleteSession(session) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Eliminar",
-                                        tint = LessionAlertRed,
-                                        modifier = Modifier.size(20.dp),
-                                    )
+                                Row {
+                                    IconButton(onClick = { onExportSession(session) }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Download,
+                                            contentDescription = "Descargar Sesión",
+                                            tint = LessionLimeAccent,
+                                            modifier = Modifier.size(22.dp),
+                                        )
+                                    }
+                                    IconButton(onClick = { sessionToDelete = session }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Eliminar",
+                                            tint = LessionAlertRed,
+                                            modifier = Modifier.size(22.dp),
+                                        )
+                                    }
                                 }
                             }
 
@@ -159,6 +180,49 @@ fun HistoryScreen(
                 }
             }
         }
+    }
+
+    // Confirmation Alert Dialog when deleting
+    if (sessionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { sessionToDelete = null },
+            title = {
+                Text(
+                    text = "Confirmar eliminación",
+                    color = LessionTextWhite,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                )
+            },
+            text = {
+                Text(
+                    text = "¿quiere borrar esta sesion?",
+                    color = LessionTextWhite,
+                    fontSize = 15.sp,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        sessionToDelete?.let { onDeleteSession(it) }
+                        sessionToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = LessionAlertRed),
+                ) {
+                    Text(text = "Sí", color = LessionTextWhite, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { sessionToDelete = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = LessionCardDark),
+                ) {
+                    Text(text = "No", color = LessionTextWhite)
+                }
+            },
+            containerColor = LessionCardDark,
+            shape = RoundedCornerShape(16.dp),
+        )
     }
 }
 
