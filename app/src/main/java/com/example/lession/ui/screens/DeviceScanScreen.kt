@@ -94,7 +94,7 @@ fun DeviceScanScreen(
                         BleConnectionState.CONNECTING -> LessionWarningOrange to "Estableciendo Conexión..."
                         BleConnectionState.SCANNING -> LessionLimeAccent to "Buscando Dispositivos BLE..."
                         BleConnectionState.CONNECTION_LOST -> LessionAlertRed to "Conexión Interrumpida - Reconectando..."
-                        BleConnectionState.ERROR -> LessionAlertRed to "Error en Adaptador Bluetooth"
+                        BleConnectionState.ERROR -> LessionAlertRed to "Error de conexión BLE"
                         BleConnectionState.DISCONNECTED -> LessionTextMuted to "Desconectado"
                     }
 

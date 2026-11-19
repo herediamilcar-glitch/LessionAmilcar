@@ -38,4 +38,9 @@ class BleViewModel(application: Application) : AndroidViewModel(application) {
     fun sendStopCommand() {
         bleManager.sendCommand("STOP")
     }
+
+    override fun onCleared() {
+        bleManager.release()
+        super.onCleared()
+    }
 }

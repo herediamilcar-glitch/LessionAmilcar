@@ -83,7 +83,7 @@ fun DashboardScreen(
                 letterSpacing = 2.sp,
             )
 
-            // Connection Badge
+            // Connection Badge (Color Indicator Only - Non-clickable)
             val statusColor = when (connectionState) {
                 BleConnectionState.RECEIVING_DATA, BleConnectionState.CONNECTED -> LessionStatusGreen
                 BleConnectionState.CONNECTING, BleConnectionState.SCANNING -> LessionWarningOrange
@@ -106,7 +106,6 @@ fun DashboardScreen(
                     .clip(RoundedCornerShape(12.dp))
                     .background(LessionCardDark)
                     .border(1.dp, statusColor, RoundedCornerShape(12.dp))
-                    .clickable { onNavigate("device_scan") }
                     .padding(horizontal = 10.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -222,7 +221,7 @@ fun DashboardScreen(
                     ) {
                         Icon(imageVector = Icons.Default.Stop, contentDescription = null)
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "DETENER Y GUARDAR ENTRENAMIENTO", fontWeight = FontWeight.Bold)
+                        Text(text = "DETENER Y GUARDAR EN HISTORIAL", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -238,7 +237,7 @@ fun DashboardScreen(
             modifier = Modifier.padding(bottom = 8.dp),
         )
 
-        // 2x3 Quick Action Grid
+        // Quick Action Grid (No Mediciones card, only Conectar Banda, Gráficos, Historial, Configuración)
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -257,7 +256,7 @@ fun DashboardScreen(
             item {
                 DashboardCard(
                     title = "Gráficos",
-                    subtitle = "Onda Temporal",
+                    subtitle = "Onda Temporal EMG",
                     icon = Icons.Default.ShowChart,
                     iconColor = LessionLimeAccent,
                     onClick = { onNavigate("charts") },
@@ -266,7 +265,7 @@ fun DashboardScreen(
             item {
                 DashboardCard(
                     title = "Historial",
-                    subtitle = "Sesiones SQLite",
+                    subtitle = "Sesiones Guardadas",
                     icon = Icons.Default.History,
                     iconColor = LessionLimeAccent,
                     onClick = { onNavigate("history") },
