@@ -13,20 +13,25 @@ class BleStreamParser(
             val lfIndex = buffer.indexOf('\n')
             if (lfIndex == -1) break
 
-            val line = buffer.substring(0, lfIndex).trim()
+            val line = buffer.substring(0, lfIndex)
             buffer.delete(0, lfIndex + 1)
 
-            if (line.isNotEmpty()) {
-                parseLine(line)
-            }
+            parseLine(line)
         }
     }
 
     private fun parseLine(line: String) {
-        val parts = line.split(",")
-        if (parts.size == 2) {
-            val tMs = parts[0].trim().toLongOrNull()
-            val adc = parts[1].trim().toIntOrNull()
+        val cleanLine = line.replace("\r", "").trim()
+        if (cleanLine.isEmpty()) return
+
+        val parts = cleanLine.split(",")
+        if (parts.size >= 2) {
+            val rawTime = parts[0].replace(Regex("[^0-9]"), "")
+            val rawAdc = parts[1].replace(Regex("[^0-9]"), "")
+
+            val tMs = rawTime.toLongOrNull()
+            val adc = rawAdc.toIntOrNull()
+
             if (tMs != null && adc != null && adc in 0..4095) {
                 onReadingParsed(
                     EmgReading(

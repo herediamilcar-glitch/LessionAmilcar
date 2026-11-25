@@ -168,7 +168,7 @@ fun HistoryScreen(
                                     IconButton(onClick = { sessionToDelete = session }) {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
-                                            contentDescription = "Eliminar",
+                                            contentDescription = "Eliminar Sesión",
                                             tint = LessionAlertRed,
                                             modifier = Modifier.size(22.dp),
                                         )
@@ -213,7 +213,7 @@ fun HistoryScreen(
             },
             text = {
                 Text(
-                    text = "¿quiere borrar esta sesion?",
+                    text = "¿Esta seguro de borrarlo?",
                     color = LessionTextWhite,
                     fontSize = 15.sp,
                 )
