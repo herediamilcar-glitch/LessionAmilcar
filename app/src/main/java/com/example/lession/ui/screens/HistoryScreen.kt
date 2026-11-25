@@ -3,6 +3,7 @@ package com.example.lession.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -151,7 +152,7 @@ fun HistoryScreen(
                                     IconButton(onClick = { onViewSession(session) }) {
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Filled.ShowChart,
-                                            contentDescription = "Ver mediciones",
+                                            contentDescription = "Ver gráfico",
                                             tint = LessionLimeAccent,
                                             modifier = Modifier.size(22.dp),
                                         )
@@ -254,78 +255,55 @@ fun WorkoutDetailScreen(
             .fillMaxSize()
             .background(LessionBackgroundDark),
     ) {
-        LessionTopBar(title = "Detalle del entrenamiento", onBackClick = onBackClick)
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        LessionTopBar(title = "Gráfico de la Sesión Guardada", onBackClick = onBackClick)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
         ) {
-            item {
-                val dateFormat = SimpleDateFormat("dd/MM/yyyy • HH:mm", Locale.getDefault())
-                Text(
-                    text = dateFormat.format(Date(session.startTimeMs)),
-                    color = LessionTextMuted,
-                    fontSize = 13.sp,
-                )
-                Text(
-                    text = "${session.sampleCount} mediciones guardadas · ${session.durationSeconds} s",
-                    color = LessionTextWhite,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-            }
-            item {
-                Card(
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy • HH:mm", Locale.getDefault())
+            Text(
+                text = dateFormat.format(Date(session.startTimeMs)),
+                color = LessionTextMuted,
+                fontSize = 13.sp,
+            )
+            Text(
+                text = "${session.sampleCount} Muestras Registradas · Duración: ${session.durationSeconds} s",
+                color = LessionTextWhite,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+            )
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(380.dp),
+                colors = CardDefaults.cardColors(containerColor = LessionCardDark),
+                shape = RoundedCornerShape(20.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, LessionPurplePrimary),
+            ) {
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(260.dp),
-                    colors = CardDefaults.cardColors(containerColor = LessionCardDark),
-                    shape = RoundedCornerShape(16.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, LessionPurplePrimary),
+                        .fillMaxSize()
+                        .padding(16.dp),
                 ) {
-                    androidx.compose.foundation.layout.Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                    ) {
-                        EmgLineCanvasChart(
-                            readings = readings,
-                            alertThreshold = 4095,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
-            }
-            item {
-                Text(
-                    text = "TIEMPO DEL SENSOR (ms) · SEÑAL EMG (ADC)",
-                    color = LessionTextMuted,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            items(measurements) { measurement ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(LessionCardDark, RoundedCornerShape(10.dp))
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "${measurement.timestampMs} ms",
-                        color = LessionTextMuted,
-                        fontSize = 12.sp,
-                    )
-                    Text(
-                        text = "${measurement.adcValue} ADC",
-                        color = LessionLimeAccent,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+                    EmgLineCanvasChart(
+                        readings = readings,
+                        alertThreshold = 4095,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "Gráfico completo de la onda muscular EMG registrada durante esta sesión guardada en SQLite.",
+                color = LessionTextMuted,
+                fontSize = 12.sp,
+                lineHeight = 16.sp,
+            )
         }
     }
 }
