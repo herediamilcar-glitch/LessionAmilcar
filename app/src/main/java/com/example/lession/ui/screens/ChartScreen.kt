@@ -25,7 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lession.ble.EmgReading
@@ -69,12 +72,12 @@ fun ChartScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Muestras en Pantalla: ${readings.size}",
+                            text = "Muestras en Ventana 120s: ${readings.size}",
                             fontSize = 12.sp,
                             color = LessionTextMuted,
                         )
                         Text(
-                            text = if (readings.isNotEmpty()) "Lectura Sensor: ${readings.last().adcValue} ADC" else "Esperando señal del sensor...",
+                            text = if (readings.isNotEmpty()) "Sensor: ${readings.last().adcValue} ADC" else "Esperando señal del sensor ESP32...",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = LessionLimeAccent,
@@ -100,11 +103,11 @@ fun ChartScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Canvas Line Chart Box
+            // Canvas Line Chart Box with labeled X and Y axes
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(380.dp),
+                    .height(390.dp),
                 colors = CardDefaults.cardColors(containerColor = LessionCardDark),
                 shape = RoundedCornerShape(20.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, LessionPurplePrimary),
@@ -112,7 +115,7 @@ fun ChartScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(12.dp)
                 ) {
                     EmgLineCanvasChart(
                         readings = readings,
@@ -126,7 +129,7 @@ fun ChartScreen(
 
             // Chart Guidance
             Text(
-                text = "Gráfico continuo de la onda muscular EMG transmitida por el sensor a 50 Hz. Rango analógico digital: 0 - 4095 ADC.",
+                text = "Gráfico dinámico en vivo del sensor ESP32. Eje Y: Amplitud ADC (0 a 4095). Eje X: Ventana temporal de 0 a 120 segundos (50 Hz).",
                 fontSize = 12.sp,
                 color = LessionTextMuted,
                 lineHeight = 16.sp,
@@ -141,45 +144,106 @@ fun EmgLineCanvasChart(
     alertThreshold: Int,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
+    val textMeasurer = rememberTextMeasurer()
 
-        // Draw Background Gridlines (0, 1000, 2000, 3000, 4000)
-        val gridLevels = listOf(0, 1000, 2000, 3000, 4000)
-        gridLevels.forEach { level ->
-            val y = height - (level / 4095f) * height
+    Canvas(modifier = modifier) {
+        val fullWidth = size.width
+        val fullHeight = size.height
+
+        // Axis paddings
+        val paddingLeft = 46.dp.toPx()
+        val paddingBottom = 26.dp.toPx()
+        val paddingTop = 12.dp.toPx()
+        val paddingRight = 12.dp.toPx()
+
+        val chartWidth = fullWidth - paddingLeft - paddingRight
+        val chartHeight = fullHeight - paddingTop - paddingBottom
+
+        val axisTextStyle = TextStyle(
+            color = LessionTextMuted,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+        )
+
+        // 1. Draw Y-Axis Gridlines & Labels (0, 1000, 2000, 3000, 4095 ADC)
+        val yGridLevels = listOf(0, 1000, 2000, 3000, 4095)
+        yGridLevels.forEach { level ->
+            val normY = level / 4095f
+            val y = paddingTop + chartHeight * (1f - normY)
+
+            // Horizontal Gridline
             drawLine(
                 color = LessionCardBorder,
-                start = Offset(0f, y),
-                end = Offset(width, y),
+                start = Offset(paddingLeft, y),
+                end = Offset(paddingLeft + chartWidth, y),
                 strokeWidth = 1.dp.toPx(),
+            )
+
+            // Y-Axis Text Label
+            val labelText = "$level"
+            val textLayout = textMeasurer.measure(labelText, style = axisTextStyle)
+            drawText(
+                textLayoutResult = textLayout,
+                topLeft = Offset(paddingLeft - textLayout.size.width - 6.dp.toPx(), y - textLayout.size.height / 2f)
+            )
+        }
+
+        // 2. Draw X-Axis Labels (0s, 30s, 60s, 90s, 120s)
+        val xTimeTicks = listOf("0s", "30s", "60s", "90s", "120s")
+        val tickCount = xTimeTicks.size
+        xTimeTicks.forEachIndexed { index, tickText ->
+            val fraction = index / (tickCount - 1).toFloat()
+            val x = paddingLeft + chartWidth * fraction
+
+            // Vertical Gridline
+            drawLine(
+                color = LessionCardBorder.copy(alpha = 0.5f),
+                start = Offset(x, paddingTop),
+                end = Offset(x, paddingTop + chartHeight),
+                strokeWidth = 1.dp.toPx(),
+            )
+
+            // X-Axis Text Label
+            val textLayout = textMeasurer.measure(tickText, style = axisTextStyle)
+            drawText(
+                textLayoutResult = textLayout,
+                topLeft = Offset(x - textLayout.size.width / 2f, paddingTop + chartHeight + 6.dp.toPx())
             )
         }
 
         // Draw Threshold Line (Alert Red)
-        val thresholdY = height - (alertThreshold / 4095f) * height
+        val thresholdNormY = alertThreshold / 4095f
+        val thresholdY = paddingTop + chartHeight * (1f - thresholdNormY)
         drawLine(
             color = LessionAlertRed,
-            start = Offset(0f, thresholdY),
-            end = Offset(width, thresholdY),
+            start = Offset(paddingLeft, thresholdY),
+            end = Offset(paddingLeft + chartWidth, thresholdY),
             strokeWidth = 2.dp.toPx(),
         )
 
         if (readings.size < 2) return@Canvas
 
-        val stepX = width / (readings.size - 1).coerceAtLeast(1)
+        // 3. Map Waveform Points across the 120s Window
         val path = Path()
         val fillPath = Path()
 
+        val firstTimestamp = readings.first().timestampMs
+
         readings.forEachIndexed { index, reading ->
-            val x = index * stepX
-            val normalizedY = (reading.adcValue / 4095f).coerceIn(0f, 1f)
-            val y = height - (normalizedY * height)
+            val elapsedSec = ((reading.timestampMs - firstTimestamp) / 1000f).coerceIn(0f, 120f)
+            val fractionX = if (readings.size == 1) 0f else (elapsedSec / 120f).coerceIn(0f, 1f)
+
+            // Also fallback to index-based distribution if timestamp range is short
+            val indexFractionX = index / (readings.size - 1).toFloat()
+            val finalFractionX = if (readings.last().timestampMs - firstTimestamp < 1000) indexFractionX else fractionX
+
+            val x = paddingLeft + chartWidth * finalFractionX
+            val normY = (reading.adcValue / 4095f).coerceIn(0f, 1f)
+            val y = paddingTop + chartHeight * (1f - normY)
 
             if (index == 0) {
                 path.moveTo(x, y)
-                fillPath.moveTo(x, height)
+                fillPath.moveTo(x, paddingTop + chartHeight)
                 fillPath.lineTo(x, y)
             } else {
                 path.lineTo(x, y)
@@ -187,15 +251,15 @@ fun EmgLineCanvasChart(
             }
 
             if (index == readings.size - 1) {
-                fillPath.lineTo(x, height)
+                fillPath.lineTo(x, paddingTop + chartHeight)
                 fillPath.close()
             }
 
-            // Highlight points exceeding threshold
+            // Highlight points exceeding alert threshold
             if (reading.adcValue >= alertThreshold) {
                 drawCircle(
                     color = LessionAlertRed,
-                    radius = 4.dp.toPx(),
+                    radius = 3.5.dp.toPx(),
                     center = Offset(x, y),
                 )
             }
@@ -208,7 +272,9 @@ fun EmgLineCanvasChart(
                 colors = listOf(
                     LessionLimeAccent.copy(alpha = 0.25f),
                     Color.Transparent,
-                )
+                ),
+                startY = paddingTop,
+                endY = paddingTop + chartHeight,
             ),
         )
 
@@ -217,15 +283,17 @@ fun EmgLineCanvasChart(
             path = path,
             color = LessionLimeAccent,
             style = Stroke(
-                width = 3.dp.toPx(),
+                width = 2.5.dp.toPx(),
                 cap = StrokeCap.Round,
             ),
         )
 
-        // Draw pulse dot at current (latest) point
+        // Draw Live Point Marker at the tip of the waveform
         val lastReading = readings.last()
-        val lastX = (readings.size - 1) * stepX
-        val lastY = height - ((lastReading.adcValue / 4095f).coerceIn(0f, 1f) * height)
+        val lastElapsedSec = ((lastReading.timestampMs - firstTimestamp) / 1000f).coerceIn(0f, 120f)
+        val lastFractionX = if (readings.last().timestampMs - firstTimestamp < 1000) 1f else (lastElapsedSec / 120f).coerceIn(0f, 1f)
+        val lastX = paddingLeft + chartWidth * lastFractionX
+        val lastY = paddingTop + chartHeight * (1f - (lastReading.adcValue / 4095f).coerceIn(0f, 1f))
 
         drawCircle(
             color = LessionLimeAccent,
