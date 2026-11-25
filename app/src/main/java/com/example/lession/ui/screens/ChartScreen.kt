@@ -29,6 +29,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lession.ble.EmgReading
@@ -56,7 +57,7 @@ fun ChartScreen(
         LessionTopBar(title = "Gráfico Temporal EMG", onBackClick = onBackClick)
 
         Column(modifier = Modifier.padding(16.dp)) {
-            // Live Stats Bar
+            // Live Stats Header Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = LessionCardDark),
@@ -70,21 +71,29 @@ fun ChartScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f, fill = false)) {
                         Text(
-                            text = "Muestras en Ventana 120s: ${readings.size}",
+                            text = "Muestras 120s: ${readings.size}",
                             fontSize = 12.sp,
                             color = LessionTextMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = if (readings.isNotEmpty()) "Sensor: ${readings.last().adcValue} ADC" else "Esperando señal del sensor ESP32...",
-                            fontSize = 16.sp,
+                            text = if (readings.isNotEmpty()) "ADC: ${readings.last().adcValue}" else "Esperando sensor ESP32...",
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = LessionLimeAccent,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Box(
                             modifier = Modifier
                                 .width(12.dp)
@@ -95,7 +104,9 @@ fun ChartScreen(
                         Text(
                             text = "Umbral ($alertThreshold)",
                             fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
                             color = LessionTextMuted,
+                            maxLines = 1,
                         )
                     }
                 }

@@ -2,11 +2,11 @@ package com.example.lession.ui.screens
 
 import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lession.ble.BleConnectionState
@@ -135,7 +136,7 @@ fun DeviceScanScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Action button (Scan / Stop Scan)
+            // Action Header with "Actualizar" Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -146,25 +147,43 @@ fun DeviceScanScreen(
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = LessionTextMuted,
+                    modifier = Modifier.weight(1f, fill = false),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
+
+                Spacer(modifier = Modifier.width(8.dp))
 
                 if (connectionState == BleConnectionState.SCANNING) {
                     Button(
                         onClick = onStopScan,
                         colors = ButtonDefaults.buttonColors(containerColor = LessionAlertRed),
                         shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                     ) {
-                        Text(text = "Detener", fontSize = 12.sp, color = LessionTextWhite)
+                        Text(
+                            text = "Detener",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = LessionTextWhite,
+                            maxLines = 1,
+                        )
                     }
                 } else {
                     Button(
                         onClick = onStartScan,
                         colors = ButtonDefaults.buttonColors(containerColor = LessionLimeAccent, contentColor = LessionBackgroundDark),
                         shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                     ) {
                         Icon(imageVector = Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Escanear BLE", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Actualizar",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                        )
                     }
                 }
             }
