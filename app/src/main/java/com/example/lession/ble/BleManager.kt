@@ -11,6 +11,7 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -91,7 +92,13 @@ class BleManager(private val context: Context) {
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             result?.device?.let { device ->
-                val name = device.name ?: result.scanRecord?.deviceName ?: "Desconocido"
+                val rawName = device.name ?: result.scanRecord?.deviceName ?: ""
+                val isLessionDevice = rawName.contains("LESSION", ignoreCase = true) || rawName.contains("ESP32", ignoreCase = true)
+
+                // STRICT FILTER: Only show official LESSION / ESP32 devices
+                if (!isLessionDevice) return@let
+
+                val name = if (rawName.isBlank()) "ESP32 LESSION" else rawName
                 val address = device.address
                 val rssi = result.rssi
 
@@ -129,13 +136,17 @@ class BleManager(private val context: Context) {
         _connectionState.value = BleConnectionState.SCANNING
 
         val scanner = bluetoothAdapter?.bluetoothLeScanner
-        scanner?.startScan(scanCallback)
+        val settings = ScanSettings.Builder()
+            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+            .build()
+
+        scanner?.startScan(null, settings, scanCallback)
 
         mainHandler.postDelayed({
             if (_connectionState.value == BleConnectionState.SCANNING) {
                 stopScan()
             }
-        }, 10000)
+        }, 12000)
     }
 
     fun stopScan() {
