@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lession.data.db.WorkoutSession
@@ -126,51 +127,69 @@ fun HistoryScreen(
                         shape = RoundedCornerShape(16.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, LessionCardBorder),
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
+                            // Header Row: Title on Left, 3 Actions on Right
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    modifier = Modifier.weight(1f, fill = false),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
                                     Icon(
                                         imageVector = Icons.Default.FitnessCenter,
                                         contentDescription = null,
                                         tint = LessionLimeAccent,
-                                        modifier = Modifier.size(20.dp),
+                                        modifier = Modifier.size(18.dp),
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = session.title,
-                                        fontSize = 16.sp,
+                                        fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = LessionTextWhite,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 }
 
-                                Row {
-                                    IconButton(onClick = { onViewSession(session) }) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                ) {
+                                    IconButton(
+                                        onClick = { onViewSession(session) },
+                                        modifier = Modifier.size(34.dp),
+                                    ) {
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Filled.ShowChart,
                                             contentDescription = "Ver gráfico",
                                             tint = LessionLimeAccent,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
-                                    IconButton(onClick = { onExportSession(session) }) {
+                                    IconButton(
+                                        onClick = { onExportSession(session) },
+                                        modifier = Modifier.size(34.dp),
+                                    ) {
                                         Icon(
                                             imageVector = Icons.Default.Download,
                                             contentDescription = "Descargar Sesión",
                                             tint = LessionLimeAccent,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
-                                    IconButton(onClick = { sessionToDelete = session }) {
+                                    IconButton(
+                                        onClick = { sessionToDelete = session },
+                                        modifier = Modifier.size(34.dp),
+                                    ) {
                                         Icon(
                                             imageVector = Icons.Default.Delete,
                                             contentDescription = "Eliminar Sesión",
                                             tint = LessionAlertRed,
-                                            modifier = Modifier.size(22.dp),
+                                            modifier = Modifier.size(20.dp),
                                         )
                                     }
                                 }
@@ -178,9 +197,9 @@ fun HistoryScreen(
 
                             Text(
                                 text = dateStr,
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 color = LessionTextMuted,
-                                modifier = Modifier.padding(bottom = 12.dp),
+                                modifier = Modifier.padding(bottom = 10.dp),
                             )
 
                             Row(
