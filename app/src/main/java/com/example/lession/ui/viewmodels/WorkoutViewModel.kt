@@ -46,7 +46,7 @@ class WorkoutViewModel(
     private val _chartPoints = MutableStateFlow<List<EmgReading>>(emptyList())
     val chartPoints: StateFlow<List<EmgReading>> = _chartPoints.asStateFlow()
 
-    private val _alertThreshold = MutableStateFlow(3200)
+    private val _alertThreshold = MutableStateFlow(3500)
     val alertThreshold: StateFlow<Int> = _alertThreshold.asStateFlow()
 
     private val _activeAlert = MutableStateFlow<String?>(null)
@@ -169,10 +169,11 @@ class WorkoutViewModel(
         var newAlertCount = current.alertCount
         val threshold = _alertThreshold.value
 
+        // Trigger alert only when genuine muscle exertion threshold is reached (e.g. >= 3500 ADC)
         if (adc >= threshold && !alertActive) {
             alertActive = true
             newAlertCount++
-            val msg = "¡Atención! Esfuerzo elevado detectado: $adc ADC (Umbral: $threshold)"
+            val msg = "¡Atención! Sobreesfuerzo detectado: $adc ADC (Umbral: $threshold)"
             _activeAlert.value = msg
 
             if (current.isRecording) {
@@ -202,7 +203,10 @@ class WorkoutViewModel(
 
         val points = _chartPoints.value.toMutableList()
         points.add(reading)
-        if (points.size > 200) {
+
+        // Rolling 30-second window buffer (30s * 50Hz = 1500 points)
+        val cutoffTime = reading.timestampMs - 30_000L
+        while (points.isNotEmpty() && (points.first().timestampMs < cutoffTime || points.size > 1500)) {
             points.removeAt(0)
         }
         _chartPoints.value = points

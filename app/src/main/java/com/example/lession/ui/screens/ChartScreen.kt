@@ -73,7 +73,7 @@ fun ChartScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f, fill = false)) {
                         Text(
-                            text = "Muestras 120s: ${readings.size}",
+                            text = "Muestras 30s: ${readings.size}",
                             fontSize = 12.sp,
                             color = LessionTextMuted,
                             maxLines = 1,
@@ -140,7 +140,7 @@ fun ChartScreen(
 
             // Chart Guidance
             Text(
-                text = "Gráfico dinámico en vivo del sensor ESP32. Eje Y: Amplitud ADC (0 a 4095). Eje X: Ventana temporal de 0 a 120 segundos (50 Hz).",
+                text = "Gráfico de alta precisión en vivo. Eje Y: Amplitud ADC (0 a 4095). Eje X: Ventana temporal de 0 a 30 segundos (50 Hz). Picos en rojo representan sobreesfuerzo.",
                 fontSize = 12.sp,
                 color = LessionTextMuted,
                 lineHeight = 16.sp,
@@ -199,8 +199,8 @@ fun EmgLineCanvasChart(
             )
         }
 
-        // 2. Draw X-Axis Labels (0s, 30s, 60s, 90s, 120s)
-        val xTimeTicks = listOf("0s", "30s", "60s", "90s", "120s")
+        // 2. Draw X-Axis Labels (0s, 10s, 20s, 30s)
+        val xTimeTicks = listOf("0s", "10s", "20s", "30s")
         val tickCount = xTimeTicks.size
         xTimeTicks.forEachIndexed { index, tickText ->
             val fraction = index / (tickCount - 1).toFloat()
@@ -229,26 +229,25 @@ fun EmgLineCanvasChart(
             color = LessionAlertRed,
             start = Offset(paddingLeft, thresholdY),
             end = Offset(paddingLeft + chartWidth, thresholdY),
-            strokeWidth = 2.dp.toPx(),
+            strokeWidth = 1.5.dp.toPx(),
         )
 
         if (readings.size < 2) return@Canvas
 
-        // 3. Map Waveform Points across the 120s Window
+        // 3. Map Waveform Points across the 30s Window
         val path = Path()
         val fillPath = Path()
 
         val firstTimestamp = readings.first().timestampMs
+        val lastTimestamp = readings.last().timestampMs
+        val totalRangeSec = maxOf(1f, (lastTimestamp - firstTimestamp) / 1000f)
+        val windowMaxSec = if (totalRangeSec > 30f) 30f else maxOf(10f, totalRangeSec)
 
         readings.forEachIndexed { index, reading ->
-            val elapsedSec = ((reading.timestampMs - firstTimestamp) / 1000f).coerceIn(0f, 120f)
-            val fractionX = if (readings.size == 1) 0f else (elapsedSec / 120f).coerceIn(0f, 1f)
+            val elapsedSec = ((reading.timestampMs - firstTimestamp) / 1000f).coerceIn(0f, windowMaxSec)
+            val fractionX = (elapsedSec / windowMaxSec).coerceIn(0f, 1f)
 
-            // Also fallback to index-based distribution if timestamp range is short
-            val indexFractionX = index / (readings.size - 1).toFloat()
-            val finalFractionX = if (readings.last().timestampMs - firstTimestamp < 1000) indexFractionX else fractionX
-
-            val x = paddingLeft + chartWidth * finalFractionX
+            val x = paddingLeft + chartWidth * fractionX
             val normY = (reading.adcValue / 4095f).coerceIn(0f, 1f)
             val y = paddingTop + chartHeight * (1f - normY)
 
@@ -266,22 +265,22 @@ fun EmgLineCanvasChart(
                 fillPath.close()
             }
 
-            // Highlight points exceeding alert threshold
+            // Highlight peaks exceeding threshold with crisp red dots
             if (reading.adcValue >= alertThreshold) {
                 drawCircle(
                     color = LessionAlertRed,
-                    radius = 3.5.dp.toPx(),
+                    radius = 3.dp.toPx(),
                     center = Offset(x, y),
                 )
             }
         }
 
-        // Draw Gradient Fill
+        // Draw Gradient Fill under waveform
         drawPath(
             path = fillPath,
             brush = Brush.verticalGradient(
                 colors = listOf(
-                    LessionLimeAccent.copy(alpha = 0.25f),
+                    LessionLimeAccent.copy(alpha = 0.15f),
                     Color.Transparent,
                 ),
                 startY = paddingTop,
@@ -289,31 +288,31 @@ fun EmgLineCanvasChart(
             ),
         )
 
-        // Draw Waveform Line
+        // Draw Fine Waveform Line (Fine Stroke for Sharp Peaks)
         drawPath(
             path = path,
             color = LessionLimeAccent,
             style = Stroke(
-                width = 2.5.dp.toPx(),
+                width = 1.2.dp.toPx(),
                 cap = StrokeCap.Round,
             ),
         )
 
         // Draw Live Point Marker at the tip of the waveform
         val lastReading = readings.last()
-        val lastElapsedSec = ((lastReading.timestampMs - firstTimestamp) / 1000f).coerceIn(0f, 120f)
-        val lastFractionX = if (readings.last().timestampMs - firstTimestamp < 1000) 1f else (lastElapsedSec / 120f).coerceIn(0f, 1f)
+        val lastElapsedSec = ((lastReading.timestampMs - firstTimestamp) / 1000f).coerceIn(0f, windowMaxSec)
+        val lastFractionX = (lastElapsedSec / windowMaxSec).coerceIn(0f, 1f)
         val lastX = paddingLeft + chartWidth * lastFractionX
         val lastY = paddingTop + chartHeight * (1f - (lastReading.adcValue / 4095f).coerceIn(0f, 1f))
 
         drawCircle(
             color = LessionLimeAccent,
-            radius = 6.dp.toPx(),
+            radius = 5.dp.toPx(),
             center = Offset(lastX, lastY),
         )
         drawCircle(
             color = LessionBackgroundDark,
-            radius = 3.dp.toPx(),
+            radius = 2.5.dp.toPx(),
             center = Offset(lastX, lastY),
         )
     }
